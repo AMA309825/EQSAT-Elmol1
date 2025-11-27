@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>مول السعودية - نظام إدارة الأقساط</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         :root {
             --primary: #1a56db;
@@ -490,56 +490,67 @@
             gap: 10px;
         }
 
-        /* Export Image Styles */
-        .export-container {
-            position: relative;
-            background: white;
-            padding: 2rem;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-            margin-bottom: 2rem;
-        }
-
-        .export-logo-bg {
+        /* Export Container (Hidden) */
+        #export-container {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-image: url('https://i.postimg.cc/FsYZPxXf/Blue-Minimalist-Beauty-House-Logo-20251103-133040-0000.png');
-            background-repeat: no-repeat;
-            background-position: center;
-            background-size: 60%;
-            opacity: 0.35;
-            z-index: 1;
+            left: -9999px;
+            top: -9999px;
+            width: 800px;
+            padding: 2rem;
+            background: white;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
         }
 
-        .export-content {
-            position: relative;
-            z-index: 2;
+        .export-logo {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 0.35;
+            z-index: -1;
+            width: 70%;
+            max-width: 500px;
         }
 
         .export-header {
             text-align: center;
-            margin-bottom: 1.5rem;
+            margin-bottom: 2rem;
             padding-bottom: 1rem;
             border-bottom: 2px solid var(--primary);
         }
 
-        .export-header h2 {
+        .export-header h1 {
             color: var(--primary);
             margin-bottom: 0.5rem;
         }
 
-        .export-header p {
-            color: var(--gray);
+        .export-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .export-table th {
+            background-color: var(--primary);
+            color: white;
+            padding: 0.75rem;
+            text-align: center;
+        }
+
+        .export-table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #ddd;
+            text-align: center;
+        }
+
+        .export-table tr:nth-child(even) {
+            background-color: #f9f9f9;
         }
 
         .export-footer {
-            margin-top: 1.5rem;
-            padding-top: 1rem;
-            border-top: 1px solid var(--gray-light);
+            margin-top: 2rem;
             text-align: center;
+            padding-top: 1rem;
+            border-top: 1px solid #ddd;
             font-size: 0.9rem;
             color: var(--gray);
         }
@@ -565,6 +576,11 @@
             
             .dashboard-cards {
                 grid-template-columns: 1fr;
+            }
+            
+            #export-container {
+                width: 95%;
+                padding: 1rem;
             }
         }
     </style>
@@ -954,8 +970,23 @@
         </button>
     </div>
 
-    <!-- Hidden Export Container -->
-    <div id="export-container" style="display: none;"></div>
+    <!-- Export Container (Hidden) -->
+    <div id="export-container">
+        <img src="https://i.postimg.cc/FsYZPxXf/Blue-Minimalist-Beauty-House-Logo-20251103-133040-0000.png" class="export-logo" alt="شعار مول السعودية">
+        <div class="export-header">
+            <h1>مول السعودية</h1>
+            <p>أجهزة العرائس - تقسيط بشروط مرنة</p>
+            <p id="export-title">تقرير العملاء</p>
+            <p id="export-date"></p>
+        </div>
+        <table class="export-table" id="export-table">
+            <!-- سيتم ملؤها ديناميكياً -->
+        </table>
+        <div class="export-footer">
+            <p>© 2026 أنس حورس — جميع الحقوق محفوظة — مول السعودية — إسماعيل صلاح — +20 11 01362148</p>
+            <p>تم إنشاء هذا التقرير في: <span id="export-time"></span></p>
+        </div>
+    </div>
 
     <footer>
         <div class="container footer-content">
@@ -1047,12 +1078,12 @@
             // نسخة احتياطية
             document.getElementById('backup-btn').addEventListener('click', backupData);
             
-            // تصدير البيانات CSV
+            // تصدير البيانات بصيغة CSV
             document.getElementById('export-clients-csv').addEventListener('click', () => exportData('clients', 'csv'));
             document.getElementById('export-sales-csv').addEventListener('click', () => exportData('sales', 'csv'));
             document.getElementById('export-installments-csv').addEventListener('click', () => exportData('installments', 'csv'));
             
-            // تصدير البيانات كصورة
+            // تصدير البيانات بصيغة الصورة
             document.getElementById('export-clients-img').addEventListener('click', () => exportData('clients', 'image'));
             document.getElementById('export-sales-img').addEventListener('click', () => exportData('sales', 'image'));
             document.getElementById('export-installments-img').addEventListener('click', () => exportData('installments', 'image'));
@@ -1706,13 +1737,26 @@
 
         // تصدير إلى صورة
         function exportToImage(type) {
-            let data, filename, title;
+            // إعداد عنصر التصدير
+            const exportContainer = document.getElementById('export-container');
+            const exportTable = document.getElementById('export-table');
+            const exportTitle = document.getElementById('export-title');
+            const exportDate = document.getElementById('export-date');
+            const exportTime = document.getElementById('export-time');
+            
+            // تعيين العنوان والتاريخ
+            const now = new Date();
+            exportDate.textContent = `تاريخ التقرير: ${now.toLocaleDateString('ar-EG')}`;
+            exportTime.textContent = now.toLocaleString('ar-EG');
+            
+            // إعداد الجدول حسب نوع البيانات
+            let data, title, headers;
             
             switch(type) {
                 case 'clients':
                     data = clients;
-                    filename = 'العملاء';
-                    title = 'قائمة العملاء - مول السعودية';
+                    title = 'تقرير العملاء';
+                    headers = ['الكود', 'الاسم', 'الهاتف', 'العنوان', 'تاريخ الإضافة'];
                     break;
                 case 'sales':
                     data = sales.map(sale => {
@@ -1723,171 +1767,84 @@
                             clientName: client ? client.name : 'غير معروف'
                         };
                     });
-                    filename = 'المبيعات';
-                    title = 'قائمة المبيعات - مول السعودية';
+                    title = 'تقرير المبيعات';
+                    headers = ['كود العميل', 'اسم العميل', 'الجهاز', 'السعر الكلي', 'القسط الشهري', 'تاريخ البيع'];
                     break;
                 case 'installments':
                     data = installments.map(installment => {
                         const client = clients.find(c => c.id === installment.clientId);
                         return {
                             ...installment,
-                            clientName: client ? client.name : 'غير معروف',
-                            statusText: getStatusText(installment.status)
+                            clientName: client ? client.name : 'غير معروف'
                         };
                     });
-                    filename = 'الأقساط';
-                    title = 'قائمة الأقساط - مول السعودية';
+                    title = 'تقرير الأقساط';
+                    headers = ['كود العميل', 'اسم العميل', 'الجهاز', 'رقم القسط', 'تاريخ الاستحقاق', 'المبلغ', 'الحالة'];
                     break;
                 default:
                     return;
             }
             
-            // إنشاء محتوى HTML للتصدير
-            const exportContainer = document.getElementById('export-container');
-            exportContainer.innerHTML = '';
+            exportTitle.textContent = title;
             
-            const exportContent = document.createElement('div');
-            exportContent.className = 'export-container';
-            
-            // إضافة شعار الخلفية
-            const logoBg = document.createElement('div');
-            logoBg.className = 'export-logo-bg';
-            exportContent.appendChild(logoBg);
-            
-            const content = document.createElement('div');
-            content.className = 'export-content';
-            
-            // رأس التقرير
-            const header = document.createElement('div');
-            header.className = 'export-header';
-            header.innerHTML = `
-                <h2>${title}</h2>
-                <p>تم إنشاء هذا التقرير في ${new Date().toLocaleDateString('ar-EG')}</p>
-            `;
-            content.appendChild(header);
-            
-            // جدول البيانات
-            const table = document.createElement('table');
-            table.style.width = '100%';
-            table.style.borderCollapse = 'collapse';
-            table.style.marginBottom = '1rem';
-            
-            // رأس الجدول
-            const thead = document.createElement('thead');
-            let headerRow = document.createElement('tr');
-            headerRow.style.backgroundColor = '#f8fafc';
-            
-            let headers = [];
-            switch(type) {
-                case 'clients':
-                    headers = ['الكود', 'الاسم', 'الهاتف', 'العنوان', 'تاريخ الإضافة'];
-                    break;
-                case 'sales':
-                    headers = ['كود العميل', 'اسم العميل', 'الجهاز', 'السعر الكلي', 'القسط الشهري', 'تاريخ البيع'];
-                    break;
-                case 'installments':
-                    headers = ['كود العميل', 'اسم العميل', 'الجهاز', 'رقم القسط', 'تاريخ الاستحقاق', 'المبلغ', 'الحالة'];
-                    break;
-            }
-            
-            headers.forEach(headerText => {
-                const th = document.createElement('th');
-                th.textContent = headerText;
-                th.style.padding = '0.75rem';
-                th.style.textAlign = 'right';
-                th.style.borderBottom = '1px solid #e5e7eb';
-                headerRow.appendChild(th);
+            // بناء الجدول
+            let tableHTML = '<thead><tr>';
+            headers.forEach(header => {
+                tableHTML += `<th>${header}</th>`;
             });
-            
-            thead.appendChild(headerRow);
-            table.appendChild(thead);
-            
-            // جسم الجدول
-            const tbody = document.createElement('tbody');
+            tableHTML += '</tr></thead><tbody>';
             
             data.forEach(item => {
-                const tr = document.createElement('tr');
-                tr.style.borderBottom = '1px solid #e5e7eb';
+                tableHTML += '<tr>';
                 
-                let cells = [];
                 switch(type) {
                     case 'clients':
-                        cells = [
-                            item.clientCode,
-                            item.name,
-                            item.phone,
-                            item.address || '-',
-                            formatDate(item.createdAt)
-                        ];
+                        tableHTML += `
+                            <td>${item.clientCode}</td>
+                            <td>${item.name}</td>
+                            <td>${item.phone}</td>
+                            <td>${item.address || '-'}</td>
+                            <td>${formatDate(item.createdAt)}</td>
+                        `;
                         break;
                     case 'sales':
-                        cells = [
-                            item.clientCode,
-                            item.clientName,
-                            item.deviceName,
-                            item.totalPrice.toFixed(2) + ' ج.م',
-                            item.monthlyPayment.toFixed(2) + ' ج.م',
-                            formatDate(item.createdAt)
-                        ];
+                        tableHTML += `
+                            <td>${item.clientCode}</td>
+                            <td>${item.clientName}</td>
+                            <td>${item.deviceName}</td>
+                            <td>${item.totalPrice.toFixed(2)} ج.م</td>
+                            <td>${item.monthlyPayment.toFixed(2)} ج.م</td>
+                            <td>${formatDate(item.createdAt)}</td>
+                        `;
                         break;
                     case 'installments':
-                        cells = [
-                            item.clientCode,
-                            item.clientName,
-                            item.deviceName,
-                            item.installmentNumber,
-                            formatDate(item.dueDate),
-                            item.amount.toFixed(2) + ' ج.م',
-                            item.statusText
-                        ];
+                        tableHTML += `
+                            <td>${item.clientCode}</td>
+                            <td>${item.clientName}</td>
+                            <td>${item.deviceName}</td>
+                            <td>${item.installmentNumber}</td>
+                            <td>${formatDate(item.dueDate)}</td>
+                            <td>${item.amount.toFixed(2)} ج.م</td>
+                            <td>${getStatusText(item.status)}</td>
+                        `;
                         break;
                 }
                 
-                cells.forEach(cellText => {
-                    const td = document.createElement('td');
-                    td.textContent = cellText;
-                    td.style.padding = '0.75rem';
-                    td.style.textAlign = 'right';
-                    tr.appendChild(td);
-                });
-                
-                tbody.appendChild(tr);
+                tableHTML += '</tr>';
             });
             
-            table.appendChild(tbody);
-            content.appendChild(table);
+            tableHTML += '</tbody>';
+            exportTable.innerHTML = tableHTML;
             
-            // تذييل التقرير
-            const footer = document.createElement('div');
-            footer.className = 'export-footer';
-            footer.innerHTML = `
-                <p>مول السعودية - أجهزة العرائس - تقسيط بشروط مرنة</p>
-                <p>إسماعيل صلاح - +20 11 01362148</p>
-                <p>© 2026 أنس حورس — جميع الحقوق محفوظة</p>
-            `;
-            content.appendChild(footer);
-            
-            exportContent.appendChild(content);
-            exportContainer.appendChild(exportContent);
-            
-            // استخدام html2canvas لالتقاط الصورة
-            html2canvas(exportContent, {
-                scale: 2, // زيادة الدقة
-                useCORS: true, // السماح بتحميل الصور من مصادر خارجية
-                logging: false // تعطيل التسجيل
-            }).then(canvas => {
-                // تحويل Canvas إلى صورة
+            // التقاط الصورة
+            html2canvas(exportContainer).then(canvas => {
                 const imgData = canvas.toDataURL('image/png');
-                
-                // إنشاء رابط تنزيل
                 const link = document.createElement('a');
                 link.href = imgData;
-                link.download = `مول-السعودية-${filename}-${new Date().toISOString().split('T')[0]}.png`;
-                document.body.appendChild(link);
+                link.download = `مول-السعودية-${title}-${now.toISOString().split('T')[0]}.png`;
                 link.click();
-                document.body.removeChild(link);
                 
-                showToast(`تم تصدير ${filename} كصورة بنجاح`);
+                showToast(`تم تصدير ${title} كصورة بنجاح`);
             });
         }
 
